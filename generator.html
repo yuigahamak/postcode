@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>India Postcode Generator</title>
+</head>
+<body>
+
+<input type="file" id="files" name="files[]" multiple />
+<output id="list"></output>
+
+<script>
+
+  document.getElementById('files').addEventListener('change', handleFileSelect, false);
+
+  function handleFileSelect(evt) {
+    var files = evt.target.files;
+    for (var i = 0, f; f = files[i]; i++) {
+      var reader = new FileReader();
+      reader.onload = (function(theFile) {
+        return function(e) {
+          var rows = e.target.result.split('\n');
+          var json = {};
+          for (var i in rows) {
+            var data = rows[i].split('\t');
+            if (!data[1]) {
+                console.log('Skip!');
+                continue;
+            }
+            console.log(data[1].substr(0, 3));
+            var filename = data[1].substr(0, 3);
+            if (!json[filename]) {
+              json[filename] = {
+                credits: [{
+                  name: 'geonames',
+                  url: 'https://www.geonames.org'
+                }],
+                last_update: new Date()
+              };
+            }
+            if (!json[filename][data[1]]) {
+              json[filename][data[1]] = [];
+            }
+            json[filename][data[1]].push({
+              address3: data[2],
+              state: data[3],
+              state_code: data[4],
+              district: data[5],
+              district_code: data[6],
+              address1: data[7],
+              address2: data[8],
+              latitude: data[9],
+              longitude: data[10],
+              accuracy: data[11],
+            });
+            //if (i > 1000) {
+            //  break;
+            //}
+          }
+          var as = [];
+          for (var key in json) {
+            console.log(key);
+            var a = document.createElement('a');
+            a.href = 'data:text/plain,' + encodeURIComponent(JSON.stringify(json[key]));
+            a.download = key + '.json';
+            as.push(a);
+          }
+          var interval = setInterval(function(){
+            var a = as.pop();
+            if (a) {
+              console.log(a.download);
+              a.click();
+            } else {
+              clearInterval(interval);
+              console.log('Complete!');
+            }
+          }, 500);
+          return false;
+        };
+      })(f);
+      reader.readAsText(f);
+    }
+  }
+
+  document.getElementById('files').addEventListener('change', handleFileSelect, false);
+
+</script>
+</body>
+</html>
